@@ -1,4 +1,4 @@
-# GAM531 Assignment 7
+# GAM531 Final Project Team 3
 
 ## Animation added
 - Idle
@@ -25,8 +25,8 @@
 ## How to run
 ```bash
 # Clone the repo
-git clone https://github.com/Yuhan-Zhao-Aiden/GAM531.git
-cd GAM531/A7
+git clone https://github.com/Yuhan-Zhao-Aiden/GAM531_Team3_Final.git
+cd GAM531_Team3_Final/
 
 # Run
 dotnet run
