@@ -22,6 +22,30 @@ public static class InputSystem
       throw new ArgumentNullException(nameof(keyboard));
     }
 
+    // Handle attack input
+    if (keyboard.IsKeyPressed(Keys.J) && player.IsGrounded && !player.IsAttacking)
+    {
+      player.IsAttacking = true;
+      player.AttackComboCount = 1;
+      player.Attack2Ready = false;
+      player.Velocity = Vector2.Zero; // Stop all movement
+      return; // Don't process other inputs during attack
+    }
+
+    // Check for attack combo (Attack2) - can queue it up while Attack is playing
+    if (keyboard.IsKeyPressed(Keys.J) && player.IsAttacking && player.AttackComboCount == 1)
+    {
+      player.Attack2Ready = true; // Queue up Attack2
+      return;
+    }
+
+    // Don't allow movement during attack - keep velocity at zero
+    if (player.IsAttacking)
+    {
+      player.Velocity = new Vector2(0, player.Velocity.Y); // Allow gravity but no horizontal movement
+      return;
+    }
+
     var wantsJump = keyboard.IsKeyPressed(Keys.Space) || keyboard.IsKeyPressed(Keys.W) || keyboard.IsKeyPressed(Keys.Up);
     if (wantsJump && player.IsGrounded)
     {
@@ -40,11 +64,48 @@ public static class InputSystem
       player.Velocity = new Vector2(-500f, player.Velocity.Y);
       player.FacingDirection = Direction.Left;
     }
+
   }
 
-  public static void UpdatePlayerAnimation(Player player)
+  public static void UpdatePlayerAnimation(Player player, KeyboardState keyboard)
   {
     const float idleSpeedThreshold = 5f;
+
+    // Handle attack animations
+    if (player.IsAttacking)
+    {
+      if (player.AttackComboCount == 1)
+      {
+        player.PlayAnimation("Attack");
+        // Check if attack finished
+        if (player.SpriteRenderer.IsAnimationFinished())
+        {
+          // Transition to Attack2 if queued, otherwise end attack
+          if (player.Attack2Ready)
+          {
+            player.AttackComboCount = 2;
+            player.Attack2Ready = false;
+            player.Velocity = Vector2.Zero;
+          }
+          else
+          {
+            player.IsAttacking = false;
+            player.AttackComboCount = 0;
+          }
+        }
+      }
+      else if (player.AttackComboCount == 2)
+      {
+        player.PlayAnimation("Attack2");
+        if (player.SpriteRenderer.IsAnimationFinished())
+        {
+          player.IsAttacking = false;
+          player.AttackComboCount = 0;
+          player.Attack2Ready = false;
+        }
+      }
+      return;
+    }
 
     if (!player.IsGrounded)
     {
@@ -57,6 +118,7 @@ public static class InputSystem
       player.PlayAnimation("Run");
       return;
     }
+
 
     player.PlayAnimation("Idle");
   }
