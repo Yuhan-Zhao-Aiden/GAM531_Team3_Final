@@ -41,6 +41,13 @@ public sealed class SpriteRenderer : IDisposable
 
   public bool HasActiveAnimation => _activeAnimation is not null;
 
+  public bool IsAnimationFinished()
+  {
+    if (_activeAnimation is null) return true;
+    var sheet = _animations[_activeAnimation];
+    return !sheet.Loops && _activeFrameIndex >= sheet.TotalFrames - 1;
+  }
+
 
   public void LoadAnimation(string animationName, string filePath, int frameWidth, int frameHeight, double frameDurationSeconds, bool loop = true)
       => LoadAnimationInternal(animationName, filePath, frameWidth, frameHeight, frameDurationSeconds, loop, frameOrigins: null);

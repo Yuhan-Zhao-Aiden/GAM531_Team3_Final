@@ -23,5 +23,5 @@ public abstract class AnimatedEntity : SceneObject
     _activeAnimation = animationName;
   }
 
-  protected string ActiveAnimation => _activeAnimation;
+  public string ActiveAnimation => _activeAnimation;
 }
