@@ -4,6 +4,7 @@ using knight.Core;
 using knight.Entities;
 using knight.Graphics;
 using knight.Systems;
+using knight.UI;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
@@ -30,6 +31,7 @@ public sealed class GameScene : IScene
 
     private Vector2i _viewportSize;
     private KeyboardState? _keyboard;
+    private UISystem? _uiSystem;
 
     // Background fields
     private SpriteRenderer? _backgroundRenderer;
@@ -95,6 +97,10 @@ public sealed class GameScene : IScene
         {
             _projectiles.Add(projectile);
         };
+
+        // Initialize UI system
+        _uiSystem = new UISystem();
+        _uiSystem.Initialize(viewportSize);
 
         BuildLevel();
     }
@@ -177,6 +183,14 @@ public sealed class GameScene : IScene
         }
 
         _background?.Update(dt);
+        
+        // Update UI with current health values
+        _uiSystem?.UpdateHealthBars(_player, _enemy);
+    }
+
+    public void DrawUI(Matrix4 projection)
+    {
+        _uiSystem?.Draw(projection);
     }
 
     public void Draw(Shader shader, Camera camera)
@@ -236,6 +250,8 @@ public sealed class GameScene : IScene
             }
             _background.Position = new Vector2(newSize.X / 2f, newSize.Y / 2f);
         }
+        
+        _uiSystem?.OnResize(newSize);
 
         BuildLevel();
     }
@@ -260,6 +276,7 @@ public sealed class GameScene : IScene
         _projectiles.Clear();
 
         _background?.Dispose();
+        _uiSystem?.Dispose();
     }
 
     public Player? Player => _player;
