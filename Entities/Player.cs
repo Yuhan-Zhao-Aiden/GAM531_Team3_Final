@@ -24,6 +24,7 @@ public sealed class Player : AnimatedEntity
   public int AttackComboCount { get; set; }
   public bool Attack2Ready { get; set; }
   public bool IsRolling { get; set; }
+  public bool IsDead { get; private set; }
   
   // Health system
   public int MaxHealth { get; } = 100;
@@ -36,19 +37,23 @@ public sealed class Player : AnimatedEntity
 
   public void TakeDamage(int damage)
   {
-    if (IsInvulnerable || CurrentHealth <= 0) return;
+    if (IsInvulnerable || IsDead || CurrentHealth <= 0) return;
     
     CurrentHealth = Math.Max(0, CurrentHealth - damage);
     Console.WriteLine($"[PLAYER] Health: {CurrentHealth}/{MaxHealth}");
     
     if (CurrentHealth <= 0)
     {
+      IsDead = true;
+      IsAttacking = false;
+      IsRolling = false;
+      PlayAnimation("Death");
       Console.WriteLine("[PLAYER] DEFEATED!");
     }
   }
 
   // Check if attack can currently deal damage (prevents multi-hit during single attack)
-  public bool CanDealDamage => IsAttacking && _attackDamageCooldown <= 0.0;
+  public bool CanDealDamage => !IsDead && IsAttacking && _attackDamageCooldown <= 0.0;
   
   // Reset attack damage cooldown when new attack starts
   public void ResetAttackCooldown()
@@ -69,7 +74,7 @@ public sealed class Player : AnimatedEntity
   // Attack sprite is 66px wide, front half (33px) is the sword
   public (Vector2 position, Vector2 size) GetAttackHitbox()
   {
-    if (!IsAttacking) return (Vector2.Zero, Vector2.Zero);
+    if (IsDead || !IsAttacking) return (Vector2.Zero, Vector2.Zero);
 
     // Attack hitbox is in front of player
     var hitboxWidth = 33f * scale; // Front half of attack sprite (sword)
@@ -119,6 +124,7 @@ public sealed class Player : AnimatedEntity
     var attackSpritePath = AssetHelper.RequireAsset(AssetHelper.GetAnimationPath(contentRoot, "_Attack.png"), "Attack sprite sheet is missing.");
     var attack2SpritePath = AssetHelper.RequireAsset(AssetHelper.GetAnimationPath(contentRoot, "_Attack2.png"), "Attack2 sprite sheet is missing.");
     var rollSpritePath = AssetHelper.RequireAsset(AssetHelper.GetAnimationPath(contentRoot, "_Roll.png"), "Roll sprite sheet is missing.");
+    var deathSpritePath = AssetHelper.RequireAsset(AssetHelper.GetAnimationPath(contentRoot, "_Death.png"), "Death sprite sheet is missing.");
 
     // Build frame origins for regular animations (10 frames, evenly spaced)
     var idleFrameOrigins = new List<Vector2i>(10);
@@ -176,6 +182,21 @@ public sealed class Player : AnimatedEntity
       new Vector2i(1364, 0)   // Frame 12
     };
 
+    // Death animation - 10 frames with irregular positions (character at 40px from top, 80px height)
+    var deathFrameOrigins = new List<Vector2i>
+    {
+      new Vector2i(35, 0),    // Frame 1
+      new Vector2i(155, 0),   // Frame 2
+      new Vector2i(276, 0),   // Frame 3
+      new Vector2i(392, 0),   // Frame 4
+      new Vector2i(508, 0),   // Frame 5
+      new Vector2i(628, 0),   // Frame 6
+      new Vector2i(749, 0),   // Frame 7
+      new Vector2i(869, 0),   // Frame 8
+      new Vector2i(989, 0),   // Frame 9
+      new Vector2i(1108, 0)   // Frame 10
+    };
+
     // Load all animations
     renderer.LoadAnimation("Idle", idleSpritePath, frameWidth: 25, frameHeight: 40, idleFrameOrigins, frameDurationSeconds: 0.1, loop: true);
     renderer.LoadAnimation("Jump", jumpSpritePath, frameWidth: 30, frameHeight: 40, jumpFrameOrigins, frameDurationSeconds: 0.1, loop: false);
@@ -184,6 +205,7 @@ public sealed class Player : AnimatedEntity
     renderer.LoadAnimation("Attack", attackSpritePath, frameWidth: 66, frameHeight: 80, attackFrameOrigins, frameDurationSeconds: 0.08, loop: false);
     renderer.LoadAnimation("Attack2", attack2SpritePath, frameWidth: 78, frameHeight: 80, attack2FrameOrigins, frameDurationSeconds: 0.08, loop: false);
     renderer.LoadAnimation("Roll", rollSpritePath, frameWidth: 45, frameHeight: 40, rollFrameOrigins, frameDurationSeconds: 0.06, loop: false);
+    renderer.LoadAnimation("Death", deathSpritePath, frameWidth: 66, frameHeight: 80, deathFrameOrigins, frameDurationSeconds: 0.1, loop: false);
 
     return renderer;
   }

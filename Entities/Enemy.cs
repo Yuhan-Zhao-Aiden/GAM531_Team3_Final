@@ -34,6 +34,7 @@ public sealed class Enemy : AnimatedEntity
 
   public bool IsGrounded { get; set; }
   public bool IsAttacking { get; set; }
+  public bool IsDead { get; private set; }
 
   // Health system
   public int MaxHealth { get; } = 100;
@@ -41,13 +42,17 @@ public sealed class Enemy : AnimatedEntity
 
   public void TakeDamage(int damage)
   {
-    if (CurrentHealth <= 0) return;
+    if (IsDead || CurrentHealth <= 0) return;
     
     CurrentHealth = Math.Max(0, CurrentHealth - damage);
     Console.WriteLine($"[ENEMY] Health: {CurrentHealth}/{MaxHealth}");
     
     if (CurrentHealth <= 0)
     {
+      IsDead = true;
+      IsAttacking = false;
+      Velocity = Vector2.Zero;
+      PlayAnimation("Dead");
       Console.WriteLine("[ENEMY] DEFEATED!");
     }
   }
@@ -79,7 +84,7 @@ public sealed class Enemy : AnimatedEntity
 
   public void UpdateAI(double deltaSeconds)
   {
-    if (_targetPlayer is null) return;
+    if (IsDead || _targetPlayer is null) return;
 
     // Update attack cooldown
     if (_attackCooldown > 0)
@@ -211,6 +216,9 @@ public sealed class Enemy : AnimatedEntity
     var attackSpritePath = AssetHelper.RequireAsset(
       AssetHelper.GetAnimationPath(contentRoot, System.IO.Path.Combine("Enemy", "Attack.png")),
       "Enemy Attack sprite sheet is missing.");
+    var deadSpritePath = AssetHelper.RequireAsset(
+      AssetHelper.GetAnimationPath(contentRoot, System.IO.Path.Combine("Enemy", "Dead.png")),
+      "Enemy Dead sprite sheet is missing.");
 
     // Idle animation - 7 frames with irregular positions
     // Frame height = 90, character starts 38px from top of 128px sheet
@@ -255,10 +263,20 @@ public sealed class Enemy : AnimatedEntity
       new Vector2i(928, 0)   // Frame 8
     };
 
+    // Dead animation - 4 frames with irregular positions (character at 40px from top, 128px height)
+    var deadFrameOrigins = new List<Vector2i>
+    {
+      new Vector2i(38, 0),   // Frame 1
+      new Vector2i(150, 0),  // Frame 2
+      new Vector2i(259, 0),  // Frame 3
+      new Vector2i(375, 0)   // Frame 4
+    };
+
     // Load all animations with frame width, height, and origins
     renderer.LoadAnimation("Idle", idleSpritePath, frameWidth: 53, frameHeight: 90, idleFrameOrigins, frameDurationSeconds: 0.12, loop: true);
     renderer.LoadAnimation("Walk", walkSpritePath, frameWidth: 80, frameHeight: 90, walkFrameOrigins, frameDurationSeconds: 0.1, loop: true);
     renderer.LoadAnimation("Attack", attackSpritePath, frameWidth: 67, frameHeight: 90, attackFrameOrigins, frameDurationSeconds: 0.1, loop: false);
+    renderer.LoadAnimation("Dead", deadSpritePath, frameWidth: 94, frameHeight: 90, deadFrameOrigins, frameDurationSeconds: 0.15, loop: false);
 
     return renderer;
   }

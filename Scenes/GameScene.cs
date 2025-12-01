@@ -114,16 +114,21 @@ public sealed class GameScene : IScene
 
         var dt = Math.Min(deltaSeconds, MaxDeltaSeconds);
 
-        if (_keyboard is not null)
+        // Only process input and physics if player is alive
+        if (!_player.IsDead)
         {
-            InputSystem.HandlePlayerInput(_player, _keyboard);
-            InputSystem.UpdatePlayerAnimation(_player, _keyboard);
-        }
+            if (_keyboard is not null)
+            {
+                InputSystem.HandlePlayerInput(_player, _keyboard);
+                InputSystem.UpdatePlayerAnimation(_player, _keyboard);
+            }
 
-        PhysicsSystem.IntegrateVelocity(_player, dt);
-        PhysicsSystem.ClampToHorizontalBounds(_player, 0, _viewportSize.X);
-        PhysicsSystem.ResolveGroundCollisions(_player, _platforms);
-        _player.UpdateCooldowns(dt);
+            PhysicsSystem.IntegrateVelocity(_player, dt);
+            PhysicsSystem.ClampToHorizontalBounds(_player, 0, _viewportSize.X);
+            PhysicsSystem.ResolveGroundCollisions(_player, _platforms);
+            _player.UpdateCooldowns(dt);
+        }
+        
         _player.Update(dt);
 
         // Update enemy
@@ -142,7 +147,7 @@ public sealed class GameScene : IScene
             _enemy.Update(dt);
 
             // Check if player attack hits enemy (with cooldown to prevent multi-hit)
-            if (_player.CanDealDamage)
+            if (_player.CanDealDamage && !_enemy.IsDead)
             {
                 var (attackPos, attackSize) = _player.GetAttackHitbox();
                 if (attackSize != Vector2.Zero && CollisionSystem.CheckAABBCollision(attackPos, attackSize, _enemy.Position, _enemy.Size))
