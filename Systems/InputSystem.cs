@@ -22,6 +22,15 @@ public static class InputSystem
       throw new ArgumentNullException(nameof(keyboard));
     }
 
+    // Handle roll input (K key)
+    if (keyboard.IsKeyPressed(Keys.K) && player.IsGrounded && !player.IsRolling && !player.IsAttacking)
+    {
+      player.IsRolling = true;
+      var rollSpeed = 600f * (int)player.FacingDirection;
+      player.Velocity = new Vector2(rollSpeed, player.Velocity.Y);
+      return; 
+    }
+
     // Handle attack input
     if (keyboard.IsKeyPressed(Keys.J) && player.IsGrounded && !player.IsAttacking)
     {
@@ -70,6 +79,17 @@ public static class InputSystem
   public static void UpdatePlayerAnimation(Player player, KeyboardState keyboard)
   {
     const float idleSpeedThreshold = 5f;
+
+    // Handle roll animation
+    if (player.IsRolling)
+    {
+      player.PlayAnimation("Roll");
+      if (player.SpriteRenderer.IsAnimationFinished())
+      {
+        player.IsRolling = false;
+      }
+      return;
+    }
 
     // Handle attack animations
     if (player.IsAttacking)

@@ -12,7 +12,9 @@ namespace knight.Scenes;
 public sealed class GameScene : IScene
 {
     private Player? _player;
+    private Enemy? _enemy;
     private readonly List<GroundTile> _platforms = new();
+    private readonly List<Projectile> _projectiles = new();
     private string? _groundTexturePath;
     private Vector2i _groundTextureSize;
 
@@ -83,6 +85,18 @@ public sealed class GameScene : IScene
 
         _player = new Player(playerStart, contentRoot, playerScale);
 
+        // Create enemy on the right side of the screen
+        var enemyScale = 2f;
+        var enemyHeight = 90 * enemyScale;
+        var enemyStartY = groundHeight + enemyHeight / 2f;
+        var enemyStart = new Vector2(_viewportSize.X - 300f, enemyStartY);
+        _enemy = new Enemy(enemyStart, contentRoot, _player, enemyScale);
+        _enemy.OnProjectileFired += projectile =>
+        {
+            Console.WriteLine($"[GAMESCENE] Projectile received, adding to list. Count before: {_projectiles.Count}");
+            _projectiles.Add(projectile);
+        };
+
         BuildLevel();
     }
 
@@ -106,6 +120,50 @@ public sealed class GameScene : IScene
         PhysicsSystem.ResolveGroundCollisions(_player, _platforms);
 
         _player.Update(dt);
+
+        // Update enemy
+        if (_enemy is not null)
+        {
+            _enemy.UpdateAI(dt);
+            
+            // Only apply physics if not attacking (attacking enemy should stay completely stationary)
+            if (!_enemy.IsAttacking)
+            {
+                PhysicsSystem.IntegrateVelocity(_enemy, dt);
+            }
+            
+            PhysicsSystem.ClampToHorizontalBounds(_enemy, 0, _viewportSize.X);
+            PhysicsSystem.ResolveGroundCollisionsForEnemy(_enemy, _platforms);
+            _enemy.Update(dt);
+        }
+
+        // Update projectiles
+        if (_projectiles.Count > 0)
+        {
+            Console.WriteLine($"[GAMESCENE] Updating {_projectiles.Count} projectile(s)");
+        }
+        for (var i = _projectiles.Count - 1; i >= 0; i--)
+        {
+            var projectile = _projectiles[i];
+            projectile.UpdateProjectile(dt);
+            projectile.Update(dt);
+
+            // Check collision with player
+            if (_player is not null && projectile.CheckCollisionWith(_player))
+            {
+                projectile.Explode();
+                // TODO: Apply damage to player when health system is implemented
+            }
+
+            // Remove projectiles that are off-screen or exploded
+            if (projectile.ShouldRemove || 
+                projectile.Position.X < -100 || projectile.Position.X > _viewportSize.X + 100 ||
+                projectile.Position.Y < -100 || projectile.Position.Y > _viewportSize.Y + 100)
+            {
+                projectile.Dispose();
+                _projectiles.RemoveAt(i);
+            }
+        }
 
         foreach (var platform in _platforms)
         {
@@ -134,8 +192,17 @@ public sealed class GameScene : IScene
             platform.Draw(shader);
         }
 
-        // Draw player last (in front)
+        // Draw player
         _player.Draw(shader);
+        
+        // Draw enemy
+        _enemy?.Draw(shader);
+
+        // Draw projectiles
+        foreach (var projectile in _projectiles)
+        {
+            projectile.Draw(shader);
+        }
     }
 
     public void OnResize(Vector2i newSize)
@@ -170,6 +237,7 @@ public sealed class GameScene : IScene
     public void Unload()
     {
         _player?.Dispose();
+        _enemy?.Dispose();
 
         foreach (var platform in _platforms)
         {
@@ -177,6 +245,13 @@ public sealed class GameScene : IScene
         }
 
         _platforms.Clear();
+
+        foreach (var projectile in _projectiles)
+        {
+            projectile.Dispose();
+        }
+
+        _projectiles.Clear();
 
         _background?.Dispose();
     }

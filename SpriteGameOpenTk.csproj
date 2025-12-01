@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="Animation\*">
+    <Content Include="Animation\**\*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
      <Content Include="Assets\*">

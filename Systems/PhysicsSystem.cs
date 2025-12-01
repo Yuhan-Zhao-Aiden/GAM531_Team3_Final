@@ -85,4 +85,48 @@ public static class PhysicsSystem
       }
     }
   }
+
+  public static void ResolveGroundCollisionsForEnemy(Enemy enemy, IReadOnlyList<GroundTile> groundTiles)
+  {
+    enemy.IsGrounded = false;
+
+    if (groundTiles.Count == 0)
+    {
+      return;
+    }
+
+    var enemyHalfSize = enemy.Size * 0.5f;
+    var enemyHalfWidth = enemyHalfSize.X;
+    var enemyHalfHeight = enemyHalfSize.Y;
+
+    foreach (var tile in groundTiles)
+    {
+      var tileHalfSize = tile.Size * 0.5f;
+      var tileHalfWidth = tileHalfSize.X;
+      var tileHalfHeight = tileHalfSize.Y;
+
+      var enemyLeft = enemy.Position.X - enemyHalfWidth;
+      var enemyRight = enemy.Position.X + enemyHalfWidth;
+      var tileLeft = tile.Position.X - tileHalfWidth;
+      var tileRight = tile.Position.X + tileHalfWidth;
+
+      if (enemyRight <= tileLeft || enemyLeft >= tileRight)
+      {
+        continue;
+      }
+
+      var enemyBottom = enemy.Position.Y - enemyHalfHeight;
+      var tileTop = tile.Position.Y + tileHalfHeight;
+      var tileBottom = tile.Position.Y - tileHalfHeight;
+
+      if (enemyBottom < tileTop && enemyBottom >= tileBottom && enemy.Velocity.Y <= 0f)
+      {
+        var penetration = tileTop - enemyBottom;
+        enemy.Position = new Vector2(enemy.Position.X, enemy.Position.Y + penetration);
+        enemy.Velocity = new Vector2(enemy.Velocity.X, 0f);
+        enemy.IsGrounded = true;
+        break;
+      }
+    }
+  }
 }
