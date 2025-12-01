@@ -116,6 +116,12 @@ void main()
         }
 
         _sceneManager.Draw(_shader, _camera);
+        
+        // Draw UI on top (after game objects)
+        if (_gameScene is not null)
+        {
+            _gameScene.DrawUI(_projection);
+        }
 
         SwapBuffers();
     }
