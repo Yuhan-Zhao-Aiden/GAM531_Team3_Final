@@ -35,6 +35,23 @@ public sealed class Enemy : AnimatedEntity
   public bool IsGrounded { get; set; }
   public bool IsAttacking { get; set; }
 
+  // Health system
+  public int MaxHealth { get; } = 100;
+  public int CurrentHealth { get; private set; } = 100;
+
+  public void TakeDamage(int damage)
+  {
+    if (CurrentHealth <= 0) return;
+    
+    CurrentHealth = Math.Max(0, CurrentHealth - damage);
+    Console.WriteLine($"[ENEMY] Health: {CurrentHealth}/{MaxHealth}");
+    
+    if (CurrentHealth <= 0)
+    {
+      Console.WriteLine("[ENEMY] DEFEATED!");
+    }
+  }
+
   public event Action<Projectile>? OnProjectileFired;
 
   // Override Size to use fixed collision box
@@ -175,13 +192,8 @@ public sealed class Enemy : AnimatedEntity
     var toPlayer = _targetPlayer.Position - spawnPosition;
     var direction = Vector2.Normalize(toPlayer);
 
-    Console.WriteLine($"[ENEMY] Firing projectile:");
-    Console.WriteLine($"  Enemy pos: {Position}, Spawn pos: {spawnPosition}");
-    Console.WriteLine($"  Player pos: {_targetPlayer.Position}, Direction: {direction}");
-
     // Create and fire projectile
     var projectile = new Projectile(spawnPosition, direction, _contentRoot, FacingDirection, scale);
-    Console.WriteLine($"  Projectile velocity: {projectile.Velocity}, Size: {projectile.Size}");
     OnProjectileFired?.Invoke(projectile);
   }
 

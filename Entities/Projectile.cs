@@ -7,10 +7,11 @@ namespace knight.Entities;
 
 public sealed class Projectile : AnimatedEntity
 {
-  private const float ProjectileSpeed = 800f;
+  private const float ProjectileSpeed = 400f;
   private Vector2 _direction;
+  public int Damage { get; } = 10;
   
-  public Projectile(Vector2 position, Vector2 direction, string contentRoot, Direction facingDirection, float scale = 6f)
+  public Projectile(Vector2 position, Vector2 direction, string contentRoot, Direction facingDirection, float scale = 3f)
       : base(position, CreateProjectileRenderer(contentRoot))
   {
     setScale(scale);
@@ -23,13 +24,11 @@ public sealed class Projectile : AnimatedEntity
   public bool IsExploding { get; set; }
   public bool ShouldRemove { get; set; }
 
-  public override Vector2 Size => new Vector2(1024f * scale, 128f * scale); // Using full texture size temporarily
+  public override Vector2 Size => new Vector2(29f * scale, 11f * scale);
 
   public override void Draw(Shader shader)
   {
     if (shader is null) throw new ArgumentNullException(nameof(shader));
-
-    Console.WriteLine($"[PROJECTILE] Drawing at {Position}, IsExploding={IsExploding}, ShouldRemove={ShouldRemove}");
 
     // Create scale matrix that includes directional flipping
     var scaleX = this.scale * (int)FacingDirection;
@@ -90,27 +89,22 @@ public sealed class Projectile : AnimatedEntity
   {
     var renderer = new SpriteRenderer();
 
-    // Load projectile sprite sheet from Animation/Enemy/Charge.png
+    // Load projectile sprite from Animation/Enemy/SingleCharge.png (no cropping needed)
     var chargePath = AssetHelper.RequireAsset(
-      AssetHelper.GetAnimationPath(contentRoot, System.IO.Path.Combine("Enemy", "Charge.png")),
-      "Projectile Charge sprite sheet is missing.");
+      AssetHelper.GetAnimationPath(contentRoot, System.IO.Path.Combine("Enemy", "SingleCharge.png")),
+      "Projectile SingleCharge sprite is missing.");
 
-    Console.WriteLine($"[PROJECTILE] Loading sprite from: {chargePath}");
-    Console.WriteLine($"[PROJECTILE] File exists: {System.IO.File.Exists(chargePath)}");
-
-    // Try loading the entire sprite sheet as a single frame (no cropping)
-    // This will show us if the texture loads at all
+    // Get the full texture size (29x11)
     var textureSize = AssetHelper.GetTextureSize(chargePath);
-    Console.WriteLine($"[PROJECTILE] Texture size: {textureSize.X}x{textureSize.Y}");
 
+    // Load the entire image as a single frame (no cropping)
     var travelFrameOrigins = new System.Collections.Generic.List<Vector2i>
     {
       new Vector2i(0, 0)
     };
 
-    // Use the full texture as one frame to test if texture loading works
+    // Load animation using full texture dimensions
     renderer.LoadAnimation("Travel", chargePath, frameWidth: textureSize.X, frameHeight: textureSize.Y, travelFrameOrigins, frameDurationSeconds: 1.0, loop: true);
-    Console.WriteLine($"[PROJECTILE] Animation loaded successfully");
 
     return renderer;
   }

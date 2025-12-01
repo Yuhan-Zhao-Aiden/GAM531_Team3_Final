@@ -24,6 +24,63 @@ public sealed class Player : AnimatedEntity
   public int AttackComboCount { get; set; }
   public bool Attack2Ready { get; set; }
   public bool IsRolling { get; set; }
+  
+  // Health system
+  public int MaxHealth { get; } = 100;
+  public int CurrentHealth { get; private set; } = 100;
+  public bool IsInvulnerable => IsRolling; // Player is invulnerable during roll
+  
+  // Attack cooldown to prevent multi-hit during single attack
+  private double _attackDamageCooldown = 0.0;
+  private const double AttackDamageCooldownDuration = 0.3; // 300ms cooldown between damage applications
+
+  public void TakeDamage(int damage)
+  {
+    if (IsInvulnerable || CurrentHealth <= 0) return;
+    
+    CurrentHealth = Math.Max(0, CurrentHealth - damage);
+    Console.WriteLine($"[PLAYER] Health: {CurrentHealth}/{MaxHealth}");
+    
+    if (CurrentHealth <= 0)
+    {
+      Console.WriteLine("[PLAYER] DEFEATED!");
+    }
+  }
+
+  // Check if attack can currently deal damage (prevents multi-hit during single attack)
+  public bool CanDealDamage => IsAttacking && _attackDamageCooldown <= 0.0;
+  
+  // Reset attack damage cooldown when new attack starts
+  public void ResetAttackCooldown()
+  {
+    _attackDamageCooldown = AttackDamageCooldownDuration;
+  }
+  
+  // Update cooldown timers (call this in Update)
+  public void UpdateCooldowns(double deltaSeconds)
+  {
+    if (_attackDamageCooldown > 0.0)
+    {
+      _attackDamageCooldown -= deltaSeconds;
+    }
+  }
+  
+  // Get attack hitbox for dealing damage to enemies
+  // Attack sprite is 66px wide, front half (33px) is the sword
+  public (Vector2 position, Vector2 size) GetAttackHitbox()
+  {
+    if (!IsAttacking) return (Vector2.Zero, Vector2.Zero);
+
+    // Attack hitbox is in front of player
+    var hitboxWidth = 33f * scale; // Front half of attack sprite (sword)
+    var hitboxHeight = FixedCollisionHeight * scale;
+    var hitboxOffsetX = (FixedCollisionWidth * scale / 2f + hitboxWidth / 2f) * (int)FacingDirection;
+    
+    var hitboxPosition = Position + new Vector2(hitboxOffsetX, 0);
+    var hitboxSize = new Vector2(hitboxWidth, hitboxHeight);
+    
+    return (hitboxPosition, hitboxSize);
+  }
 
   // Override Size to use fixed collision box regardless of sprite size
   // This prevents position shifts when switching between different sized animations
