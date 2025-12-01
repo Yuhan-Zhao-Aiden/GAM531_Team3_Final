@@ -10,16 +10,16 @@ namespace knight;
 
 public sealed class Game : GameWindow
 {
-  private readonly string _contentRoot;
+    private readonly string _contentRoot;
 
-  private Shader? _shader;
-  private Camera? _camera;
-  private SceneManager? _sceneManager;
-  private GameScene? _gameScene;
+    private Shader? _shader;
+    private Camera? _camera;
+    private SceneManager? _sceneManager;
+    private GameScene? _gameScene;
 
-  private Matrix4 _projection;
+    private Matrix4 _projection;
 
-  private const string VertexShaderSource = @"
+    private const string VertexShaderSource = @"
 #version 330 core
 layout(location = 0) in vec2 aPosition;
 layout(location = 1) in vec2 aTexCoord;
@@ -36,7 +36,7 @@ void main()
     vTexCoord = aTexCoord;
 }";
 
-  private const string FragmentShaderSource = @"
+    private const string FragmentShaderSource = @"
 #version 330 core
 in vec2 vTexCoord;
 
@@ -49,126 +49,127 @@ void main()
     FragColor = texture(uTexture, vTexCoord);
 }";
 
-  public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, string? contentRoot = null)
-      : base(gameWindowSettings, nativeWindowSettings)
-  {
-    _contentRoot = contentRoot ?? AppContext.BaseDirectory;
-  }
-
-  protected override void OnLoad()
-  {
-    base.OnLoad();
-
-    GL.ClearColor(0.1f, 0.12f, 0.16f, 1f);
-    GL.Enable(EnableCap.Blend);
-    GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-    GL.Viewport(0, 0, FramebufferSize.X, FramebufferSize.Y);
-
-    _shader = new Shader(VertexShaderSource, FragmentShaderSource);
-    _shader.Use();
-    _shader.SetInt("uTexture", 0);
-
-    UpdateProjection();
-    _shader.SetMatrix4("uProjection", _projection);
-
-    _camera = new Camera(new Vector2(ClientSize.X / 2f, ClientSize.Y / 2f), new Vector2(ClientSize.X, ClientSize.Y));
-
-    _sceneManager = new SceneManager(_contentRoot, ClientSize);
-    _gameScene = new GameScene();
-    _sceneManager.LoadScene(_gameScene);
-  }
-
-  protected override void OnUpdateFrame(FrameEventArgs args)
-  {
-    base.OnUpdateFrame(args);
-
-    if (_sceneManager is null || _camera is null)
+    public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, string? contentRoot = null)
+        : base(gameWindowSettings, nativeWindowSettings)
     {
-      return;
+        _contentRoot = contentRoot ?? AppContext.BaseDirectory;
     }
 
-    // Pass keyboard state to game scene
-    if (_gameScene is not null)
+    protected override void OnLoad()
     {
-      _gameScene.SetKeyboardState(KeyboardState);
+        base.OnLoad();
+
+        GL.ClearColor(0.1f, 0.12f, 0.16f, 1f);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+        GL.Viewport(0, 0, FramebufferSize.X, FramebufferSize.Y);
+
+        _shader = new Shader(VertexShaderSource, FragmentShaderSource);
+        _shader.Use();
+        _shader.SetInt("uTexture", 0);
+
+        UpdateProjection();
+        _shader.SetMatrix4("uProjection", _projection);
+
+        _camera = new Camera(new Vector2(ClientSize.X / 2f, ClientSize.Y / 2f), new Vector2(ClientSize.X, ClientSize.Y));
+
+        _sceneManager = new SceneManager(_contentRoot, ClientSize);
+        _gameScene = new GameScene();
+        _sceneManager.LoadScene(_gameScene);
     }
 
-    _sceneManager.Update(args.Time);
-
-    // Update camera to follow player
-    if (_gameScene?.Player is not null)
+    protected override void OnUpdateFrame(FrameEventArgs args)
     {
-      _camera.FollowTarget(_gameScene.Player.Position, smoothing: 0.1f);
-    }
-  }
+        base.OnUpdateFrame(args);
 
-  protected override void OnRenderFrame(FrameEventArgs args)
-  {
-    base.OnRenderFrame(args);
+        if (_sceneManager is null || _camera is null)
+        {
+            return;
+        }
 
-    GL.Clear(ClearBufferMask.ColorBufferBit);
+        // Pass keyboard state to game scene
+        if (_gameScene is not null)
+        {
+            _gameScene.SetKeyboardState(KeyboardState);
+        }
 
-    if (_shader is null || _camera is null || _sceneManager is null)
-    {
-      SwapBuffers();
-      return;
-    }
+        _sceneManager.Update(args.Time);
 
-    _sceneManager.Draw(_shader, _camera);
-
-    SwapBuffers();
-  }
-
-  protected override void OnFramebufferResize(FramebufferResizeEventArgs e)
-  {
-    base.OnFramebufferResize(e);
-
-    GL.Viewport(0, 0, e.Width, e.Height);
-    UpdateProjection();
-
-    if (_shader is not null)
-    {
-      _shader.Use();
-      _shader.SetMatrix4("uProjection", _projection);
+        // REMOVED: Camera follow code
+        // The camera now stays fixed at its initial position
+        // if (_gameScene?.Player is not null)
+        // {
+        //   _camera.FollowTarget(_gameScene.Player.Position, smoothing: 0.1f);
+        // }
     }
 
-    if (_camera is not null)
+    protected override void OnRenderFrame(FrameEventArgs args)
     {
-      _camera.ViewportSize = new Vector2(e.Width, e.Height);
+        base.OnRenderFrame(args);
+
+        GL.Clear(ClearBufferMask.ColorBufferBit);
+
+        if (_shader is null || _camera is null || _sceneManager is null)
+        {
+            SwapBuffers();
+            return;
+        }
+
+        _sceneManager.Draw(_shader, _camera);
+
+        SwapBuffers();
     }
 
-    _sceneManager?.OnResize(new Vector2i(e.Width, e.Height));
-  }
-
-  protected override void OnResize(ResizeEventArgs e)
-  {
-    base.OnResize(e);
-
-    UpdateProjection();
-
-    if (_shader is not null)
+    protected override void OnFramebufferResize(FramebufferResizeEventArgs e)
     {
-      _shader.Use();
-      _shader.SetMatrix4("uProjection", _projection);
+        base.OnFramebufferResize(e);
+
+        GL.Viewport(0, 0, e.Width, e.Height);
+        UpdateProjection();
+
+        if (_shader is not null)
+        {
+            _shader.Use();
+            _shader.SetMatrix4("uProjection", _projection);
+        }
+
+        if (_camera is not null)
+        {
+            _camera.ViewportSize = new Vector2(e.Width, e.Height);
+        }
+
+        _sceneManager?.OnResize(new Vector2i(e.Width, e.Height));
     }
 
-    if (_camera is not null)
+    protected override void OnResize(ResizeEventArgs e)
     {
-      _camera.ViewportSize = new Vector2(e.Width, e.Height);
+        base.OnResize(e);
+
+        UpdateProjection();
+
+        if (_shader is not null)
+        {
+            _shader.Use();
+            _shader.SetMatrix4("uProjection", _projection);
+        }
+
+        if (_camera is not null)
+        {
+            _camera.ViewportSize = new Vector2(e.Width, e.Height);
+        }
+
+        _sceneManager?.OnResize(new Vector2i(e.Width, e.Height));
     }
 
-    _sceneManager?.OnResize(new Vector2i(e.Width, e.Height));
-  }
+    protected override void OnUnload()
+    {
+        _sceneManager?.Unload();
+        _shader?.Dispose();
+        base.OnUnload();
+    }
 
-  protected override void OnUnload()
-  {
-    _sceneManager?.Unload();
-    _shader?.Dispose();
-    base.OnUnload();
-  }
-
-  private void UpdateProjection()
-  {
-    _projection = Matrix4.CreateOrthographicOffCenter(0, ClientSize.X, 0, ClientSize.Y, -1f, 1f);
-  }
+    private void UpdateProjection()
+    {
+        _projection = Matrix4.CreateOrthographicOffCenter(0, ClientSize.X, 0, ClientSize.Y, -1f, 1f);
+    }
 }
