@@ -93,7 +93,6 @@ public sealed class GameScene : IScene
         _enemy = new Enemy(enemyStart, contentRoot, _player, enemyScale);
         _enemy.OnProjectileFired += projectile =>
         {
-            Console.WriteLine($"[GAMESCENE] Projectile received, adding to list. Count before: {_projectiles.Count}");
             _projectiles.Add(projectile);
         };
 
@@ -118,7 +117,7 @@ public sealed class GameScene : IScene
         PhysicsSystem.IntegrateVelocity(_player, dt);
         PhysicsSystem.ClampToHorizontalBounds(_player, 0, _viewportSize.X);
         PhysicsSystem.ResolveGroundCollisions(_player, _platforms);
-
+        _player.UpdateCooldowns(dt);
         _player.Update(dt);
 
         // Update enemy
@@ -135,24 +134,31 @@ public sealed class GameScene : IScene
             PhysicsSystem.ClampToHorizontalBounds(_enemy, 0, _viewportSize.X);
             PhysicsSystem.ResolveGroundCollisionsForEnemy(_enemy, _platforms);
             _enemy.Update(dt);
+
+            // Check if player attack hits enemy (with cooldown to prevent multi-hit)
+            if (_player.CanDealDamage)
+            {
+                var (attackPos, attackSize) = _player.GetAttackHitbox();
+                if (attackSize != Vector2.Zero && CollisionSystem.CheckAABBCollision(attackPos, attackSize, _enemy.Position, _enemy.Size))
+                {
+                    _enemy.TakeDamage(15); // 15 damage per attack hit
+                    _player.ResetAttackCooldown(); // Prevent multi-hit during same attack
+                }
+            }
         }
 
         // Update projectiles
-        if (_projectiles.Count > 0)
-        {
-            Console.WriteLine($"[GAMESCENE] Updating {_projectiles.Count} projectile(s)");
-        }
         for (var i = _projectiles.Count - 1; i >= 0; i--)
         {
             var projectile = _projectiles[i];
             projectile.UpdateProjectile(dt);
             projectile.Update(dt);
 
-            // Check collision with player
-            if (_player is not null && projectile.CheckCollisionWith(_player))
+            // Check collision with player (ignore if rolling - invulnerable)
+            if (_player is not null && !_player.IsInvulnerable && projectile.CheckCollisionWith(_player))
             {
+                _player.TakeDamage(projectile.Damage);
                 projectile.Explode();
-                // TODO: Apply damage to player when health system is implemented
             }
 
             // Remove projectiles that are off-screen or exploded
