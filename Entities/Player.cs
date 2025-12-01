@@ -23,6 +23,7 @@ public sealed class Player : AnimatedEntity
   public bool IsAttacking { get; set; }
   public int AttackComboCount { get; set; }
   public bool Attack2Ready { get; set; }
+  public bool IsRolling { get; set; }
 
   // Override Size to use fixed collision box regardless of sprite size
   // This prevents position shifts when switching between different sized animations
@@ -60,6 +61,7 @@ public sealed class Player : AnimatedEntity
     var runSpritePath = AssetHelper.RequireAsset(AssetHelper.GetAnimationPath(contentRoot, "_Run.png"), "Run sprite sheet is missing.");
     var attackSpritePath = AssetHelper.RequireAsset(AssetHelper.GetAnimationPath(contentRoot, "_Attack.png"), "Attack sprite sheet is missing.");
     var attack2SpritePath = AssetHelper.RequireAsset(AssetHelper.GetAnimationPath(contentRoot, "_Attack2.png"), "Attack2 sprite sheet is missing.");
+    var rollSpritePath = AssetHelper.RequireAsset(AssetHelper.GetAnimationPath(contentRoot, "_Roll.png"), "Roll sprite sheet is missing.");
 
     // Build frame origins for regular animations (10 frames, evenly spaced)
     var idleFrameOrigins = new List<Vector2i>(10);
@@ -100,6 +102,23 @@ public sealed class Player : AnimatedEntity
       new Vector2i(630, 0)   // Frame 6
     };
 
+    // Roll animation - irregular frame positions (character starts at y=0, extends 40px down)
+    var rollFrameOrigins = new List<Vector2i>
+    {
+      new Vector2i(47, 0),    // Frame 1
+      new Vector2i(161, 0),   // Frame 2
+      new Vector2i(282, 0),   // Frame 3
+      new Vector2i(400, 0),   // Frame 4
+      new Vector2i(520, 0),   // Frame 5
+      new Vector2i(640, 0),   // Frame 6
+      new Vector2i(765, 0),   // Frame 7
+      new Vector2i(892, 0),   // Frame 8
+      new Vector2i(1013, 0),  // Frame 9
+      new Vector2i(1127, 0),  // Frame 10
+      new Vector2i(1248, 0),  // Frame 11
+      new Vector2i(1364, 0)   // Frame 12
+    };
+
     // Load all animations
     renderer.LoadAnimation("Idle", idleSpritePath, frameWidth: 25, frameHeight: 40, idleFrameOrigins, frameDurationSeconds: 0.1, loop: true);
     renderer.LoadAnimation("Jump", jumpSpritePath, frameWidth: 30, frameHeight: 40, jumpFrameOrigins, frameDurationSeconds: 0.1, loop: false);
@@ -107,6 +126,7 @@ public sealed class Player : AnimatedEntity
     renderer.LoadAnimation("Run", runSpritePath, frameWidth: 25, frameHeight: 40, runFrameOrigins, frameDurationSeconds: 0.1, loop: true);
     renderer.LoadAnimation("Attack", attackSpritePath, frameWidth: 66, frameHeight: 80, attackFrameOrigins, frameDurationSeconds: 0.08, loop: false);
     renderer.LoadAnimation("Attack2", attack2SpritePath, frameWidth: 78, frameHeight: 80, attack2FrameOrigins, frameDurationSeconds: 0.08, loop: false);
+    renderer.LoadAnimation("Roll", rollSpritePath, frameWidth: 45, frameHeight: 40, rollFrameOrigins, frameDurationSeconds: 0.06, loop: false);
 
     return renderer;
   }
