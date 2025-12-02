@@ -44,10 +44,12 @@ in vec2 vTexCoord;
 out vec4 FragColor;
 
 uniform sampler2D uTexture;
+uniform vec3 uColorTint;
 
 void main()
 {
-    FragColor = texture(uTexture, vTexCoord);
+    vec4 texColor = texture(uTexture, vTexCoord);
+    FragColor = vec4(texColor.rgb * uColorTint, texColor.a);
 }";
 
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings, string? contentRoot = null)
@@ -68,6 +70,7 @@ void main()
         _shader = new Shader(VertexShaderSource, FragmentShaderSource);
         _shader.Use();
         _shader.SetInt("uTexture", 0);
+        _shader.SetVector3("uColorTint", new Vector3(1.0f, 1.0f, 1.0f)); // Default white (no tint)
 
         UpdateProjection();
         _shader.SetMatrix4("uProjection", _projection);

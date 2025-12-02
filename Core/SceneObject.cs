@@ -42,6 +42,7 @@ public abstract class SceneObject : IDisposable
     
     var translation = Matrix4.CreateTranslation(Position.X, Position.Y, 0f);
     shader.SetMatrix4("uModel", scaleMatrix * translation);
+    shader.SetVector3("uColorTint", new Vector3(1.0f, 1.0f, 1.0f)); // No tint
     SpriteRenderer.Draw();
   }
 

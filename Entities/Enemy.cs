@@ -22,6 +22,8 @@ public sealed class Enemy : AnimatedEntity
   private int _attackRepeatCount;
   private readonly string _contentRoot;
   private bool _projectileFiredThisAttack;
+  private double _damageFlashTimer;
+  private const double DamageFlashDuration = 0.5; // 0.5 seconds red flash
 
   public Enemy(Vector2 position, string contentRoot, Player targetPlayer, float scale = 2f)
       : base(position, CreateEnemyRenderer(contentRoot))
@@ -45,6 +47,7 @@ public sealed class Enemy : AnimatedEntity
     if (IsDead || CurrentHealth <= 0) return;
     
     CurrentHealth = Math.Max(0, CurrentHealth - damage);
+    _damageFlashTimer = DamageFlashDuration; // Trigger red flash
     Console.WriteLine($"[ENEMY] Health: {CurrentHealth}/{MaxHealth}");
     
     if (CurrentHealth <= 0)
@@ -79,12 +82,29 @@ public sealed class Enemy : AnimatedEntity
     // Apply render offset to Y position to keep bottom grounded
     var translation = Matrix4.CreateTranslation(Position.X, Position.Y + renderOffsetY, 0f);
     shader.SetMatrix4("uModel", scaleMatrix * translation);
+    
+    // Apply damage flash color tint
+    if (_damageFlashTimer > 0)
+    {
+      shader.SetVector3("uColorTint", new Vector3(2.0f, 0.3f, 0.3f)); // Red tint (boost red, reduce green/blue)
+    }
+    else
+    {
+      shader.SetVector3("uColorTint", new Vector3(1.0f, 1.0f, 1.0f)); // Normal (white/no tint)
+    }
+    
     SpriteRenderer.Draw();
   }
 
   public void UpdateAI(double deltaSeconds)
   {
     if (IsDead || _targetPlayer is null) return;
+
+    // Update damage flash timer
+    if (_damageFlashTimer > 0)
+    {
+      _damageFlashTimer -= deltaSeconds;
+    }
 
     // Update attack cooldown
     if (_attackCooldown > 0)
