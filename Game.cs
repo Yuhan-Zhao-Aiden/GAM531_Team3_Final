@@ -5,6 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace knight;
 
@@ -84,6 +85,14 @@ void main()
 
         if (_sceneManager is null || _camera is null)
         {
+            return;
+        }
+
+        if (KeyboardState.IsKeyDown(Keys.Escape))
+        {
+            _sceneManager.Unload();
+            _gameScene = new GameScene();
+            _sceneManager.LoadScene(_gameScene);
             return;
         }
 
