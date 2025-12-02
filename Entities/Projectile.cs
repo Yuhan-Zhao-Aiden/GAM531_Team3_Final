@@ -23,8 +23,10 @@ public sealed class Projectile : AnimatedEntity
 
   public bool IsExploding { get; set; }
   public bool ShouldRemove { get; set; }
+  private double _explosionTimer;
+  private const double ExplosionDuration = 0.3; // Total explosion animation duration (5 frames * 0.06s)
 
-  public override Vector2 Size => new Vector2(29f * scale, 11f * scale);
+  public override Vector2 Size => IsExploding ? new Vector2(65f * scale, 70f * scale) : new Vector2(29f * scale, 11f * scale);
 
   public override void Draw(Shader shader)
   {
@@ -37,6 +39,7 @@ public sealed class Projectile : AnimatedEntity
     
     var translation = Matrix4.CreateTranslation(Position.X, Position.Y, 0f);
     shader.SetMatrix4("uModel", scaleMatrix * translation);
+    shader.SetVector3("uColorTint", new Vector3(1.0f, 1.0f, 1.0f)); // No tint
     SpriteRenderer.Draw();
   }
 
@@ -44,9 +47,13 @@ public sealed class Projectile : AnimatedEntity
   {
     if (IsExploding)
     {
-      // TODO: Play explosion animation when implemented
-      // For now, just mark for removal
-      ShouldRemove = true;
+      _explosionTimer += deltaSeconds;
+      
+      // Remove projectile after explosion animation completes
+      if (SpriteRenderer.IsAnimationFinished() || _explosionTimer >= ExplosionDuration)
+      {
+        ShouldRemove = true;
+      }
       return;
     }
 
@@ -60,7 +67,8 @@ public sealed class Projectile : AnimatedEntity
     {
       IsExploding = true;
       Velocity = Vector2.Zero;
-      // TODO: PlayAnimation("Explode") when explosion animation is added
+      _explosionTimer = 0;
+      PlayAnimation("Explode");
     }
   }
 
@@ -105,6 +113,23 @@ public sealed class Projectile : AnimatedEntity
 
     // Load animation using full texture dimensions
     renderer.LoadAnimation("Travel", chargePath, frameWidth: textureSize.X, frameHeight: textureSize.Y, travelFrameOrigins, frameDurationSeconds: 1.0, loop: true);
+
+    // Load explosion animation from Charge.png sprite sheet
+    var explosionPath = AssetHelper.RequireAsset(
+      AssetHelper.GetAnimationPath(contentRoot, System.IO.Path.Combine("Enemy", "Charge.png")),
+      "Explosion sprite sheet is missing.");
+
+    // Explosion animation - 5 frames with irregular positions (65x70 each, flips with projectile direction)
+    var explosionFrameOrigins = new System.Collections.Generic.List<Vector2i>
+    {
+      new Vector2i(309, 30),  // Frame 1
+      new Vector2i(430, 30),  // Frame 2
+      new Vector2i(558, 30),  // Frame 3
+      new Vector2i(682, 28),  // Frame 4
+      new Vector2i(810, 25)   // Frame 5
+    };
+
+    renderer.LoadAnimation("Explode", explosionPath, frameWidth: 65, frameHeight: 70, explosionFrameOrigins, frameDurationSeconds: 0.06, loop: false);
 
     return renderer;
   }

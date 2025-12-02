@@ -66,6 +66,15 @@ public sealed class Shader : IDisposable
         }
     }
 
+    public void SetVector3(string uniformName, Vector3 value)
+    {
+        var location = GL.GetUniformLocation(Handle, uniformName);
+        if (location != -1)
+        {
+            GL.Uniform3(location, value);
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed)
