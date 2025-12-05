@@ -75,9 +75,10 @@ void main()
         UpdateProjection();
         _shader.SetMatrix4("uProjection", _projection);
 
-        _camera = new Camera(new Vector2(ClientSize.X / 2f, ClientSize.Y / 2f), new Vector2(ClientSize.X, ClientSize.Y));
+        // Fixed camera at origin for non-moving view
+        _camera = new Camera(new Vector2(0, 0), new Vector2(FramebufferSize.X, FramebufferSize.Y));
 
-        _sceneManager = new SceneManager(_contentRoot, ClientSize);
+        _sceneManager = new SceneManager(_contentRoot, FramebufferSize);
         _gameScene = new GameScene();
         _sceneManager.LoadScene(_gameScene);
     }
@@ -154,6 +155,8 @@ void main()
         if (_camera is not null)
         {
             _camera.ViewportSize = new Vector2(e.Width, e.Height);
+            // Keep camera position at origin for fixed view
+            _camera.Position = new Vector2(0, 0);
         }
 
         _sceneManager?.OnResize(new Vector2i(e.Width, e.Height));
@@ -162,21 +165,7 @@ void main()
     protected override void OnResize(ResizeEventArgs e)
     {
         base.OnResize(e);
-
-        UpdateProjection();
-
-        if (_shader is not null)
-        {
-            _shader.Use();
-            _shader.SetMatrix4("uProjection", _projection);
-        }
-
-        if (_camera is not null)
-        {
-            _camera.ViewportSize = new Vector2(e.Width, e.Height);
-        }
-
-        _sceneManager?.OnResize(new Vector2i(e.Width, e.Height));
+        // OnFramebufferResize handles all resize logic
     }
 
     protected override void OnUnload()
@@ -188,6 +177,6 @@ void main()
 
     private void UpdateProjection()
     {
-        _projection = Matrix4.CreateOrthographicOffCenter(0, ClientSize.X, 0, ClientSize.Y, -1f, 1f);
+        _projection = Matrix4.CreateOrthographicOffCenter(0, FramebufferSize.X, 0, FramebufferSize.Y, -1f, 1f);
     }
 }
