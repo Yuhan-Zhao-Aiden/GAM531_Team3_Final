@@ -38,6 +38,7 @@ public static class InputSystem
       player.AttackComboCount = 1;
       player.Attack2Ready = false;
       player.Velocity = Vector2.Zero; // Stop all movement
+      player.TriggerAttackSound(); // Trigger attack sound
       return; // Don't process other inputs during attack
     }
 
