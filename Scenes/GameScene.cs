@@ -286,13 +286,8 @@ public sealed class GameScene : IScene
   {
     _viewportSize = newSize;
 
-    if (_player is not null)
-    {
-      var groundHeight = _groundTextureSize.Y;
-      var playerHeight = _player.Size.Y;
-      var playerY = groundHeight + playerHeight / 2f;
-      _player.Position = new Vector2(newSize.X / 2f, playerY);
-    }
+    // Don't reposition player and enemy - keep fixed world coordinates
+    // This maintains the proportions and jump heights
 
     // Update background size and position on resize
     if (_background is not null)
@@ -310,6 +305,7 @@ public sealed class GameScene : IScene
 
     _uiSystem?.OnResize(newSize);
 
+    // Rebuild level with new viewport size for ground tiles
     BuildLevel();
   }
 

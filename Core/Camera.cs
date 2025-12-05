@@ -30,10 +30,8 @@ public sealed class Camera
   {
     get
     {
-      // Center the camera on its position
-      var x = -_position.X + _viewportSize.X / 2f;
-      var y = -_position.Y + _viewportSize.Y / 2f;
-      return Matrix4.CreateTranslation(x, y, 0f);
+      // Fixed camera - use identity matrix (no translation)
+      return Matrix4.Identity;
     }
   }
 
