@@ -26,6 +26,15 @@ public sealed class Player : AnimatedEntity
   public bool IsRolling { get; set; }
   public bool IsDead { get; private set; }
   
+  // Events
+  public event Action? OnAttackStart;
+  
+  // Internal method to trigger attack sound (called from InputSystem)
+  internal void TriggerAttackSound()
+  {
+    OnAttackStart?.Invoke();
+  }
+  
   // Health system
   public int MaxHealth { get; } = 100;
   public int CurrentHealth { get; private set; } = 100;

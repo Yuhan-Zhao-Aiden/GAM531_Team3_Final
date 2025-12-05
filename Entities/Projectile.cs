@@ -1,6 +1,7 @@
 using System;
 using knight.Core;
 using knight.Graphics;
+using knight.Systems;
 using OpenTK.Mathematics;
 
 namespace knight.Entities;
@@ -10,6 +11,9 @@ public sealed class Projectile : AnimatedEntity
   private const float ProjectileSpeed = 400f;
   private Vector2 _direction;
   public int Damage { get; } = 10;
+  
+  // Events
+  public event Action? OnExplode;
   
   public Projectile(Vector2 position, Vector2 direction, string contentRoot, Direction facingDirection, float scale = 3f)
       : base(position, CreateProjectileRenderer(contentRoot))
@@ -69,6 +73,7 @@ public sealed class Projectile : AnimatedEntity
       Velocity = Vector2.Zero;
       _explosionTimer = 0;
       PlayAnimation("Explode");
+      OnExplode?.Invoke();
     }
   }
 

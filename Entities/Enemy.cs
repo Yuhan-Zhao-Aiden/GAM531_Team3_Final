@@ -37,6 +37,10 @@ public sealed class Enemy : AnimatedEntity
   public bool IsGrounded { get; set; }
   public bool IsAttacking { get; set; }
   public bool IsDead { get; private set; }
+  
+  // Events
+  public event Action<Projectile>? OnProjectileFired;
+  public event Action? OnShoot;
 
   // Health system
   public int MaxHealth { get; } = 100;
@@ -59,8 +63,6 @@ public sealed class Enemy : AnimatedEntity
       Console.WriteLine("[ENEMY] DEFEATED!");
     }
   }
-
-  public event Action<Projectile>? OnProjectileFired;
 
   // Override Size to use fixed collision box
   public override Vector2 Size => new Vector2(FixedCollisionWidth * scale, FixedCollisionHeight * scale);
@@ -203,6 +205,8 @@ public sealed class Enemy : AnimatedEntity
   private void FireProjectile()
   {
     if (_targetPlayer is null) return;
+    
+    OnShoot?.Invoke(); // Trigger shoot sound
 
     // Calculate projectile spawn position at upper corner of enemy
     var enemyHalfWidth = (FixedCollisionWidth * scale) / 2f;
